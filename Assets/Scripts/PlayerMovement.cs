@@ -29,6 +29,9 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rigid;
     Quaternion lookAt;                      // 바라볼 방향.    
 
+    float rotateX;                          // x축 회전 값.
+    bool isLockControl;                     // 키 입력 제한.
+
     bool isGrounded
     {
         get
@@ -78,36 +81,44 @@ public class PlayerMovement : MonoBehaviour
 
         RotateBody();
         RotateCam();
-        Jump();
-    }
-    private void FixedUpdate()
-    {
-        Movement();
+
+        // 키 입력 제한이 걸리지 않앗을 경우.
+        if (!isLockControl)
+        {
+            Movement();
+            Jump();
+        }
+        else
+        {
+            // 애니메이션 파라이터.
+            isMovement = false;
+            isRun = false;
+
+            rigid.velocity = new Vector3(0f, rigid.velocity.y, 0f); // 캐릭터 정지.
+        }
+
+        anim.SetFloat("velocityY", rigid.velocity.y);
     }
 
     void Movement()
     {
         float x = Input.GetAxisRaw("Horizontal");           // 좌,우
         float z = Input.GetAxisRaw("Vertical");             // 상,하
-                                                            
+
         // 입력 값에 따른 방향 벡터를 구한 뒤, Rigidbody의 MovePositoin을 이용한다.
         // 정면은 카메라의 로컬 좌표계 기준 정면이 되어야 한다.
         Vector3 direction = (horizontalEye.forward * z + horizontalEye.right * x).normalized;
-
-        // 이동 여부와 달리기 여부.
-        isMovement = direction != Vector3.zero;
+        isMovement = (direction != Vector3.zero);
         isRun = Input.GetKey(KeyCode.LeftShift);
 
-        if (isMovement)
-        {
-            // 속도 : 기본 이동 속도 * 달리기 배율.
-            float speed = moveSpeed * (isRun ? 1.5f : 1.0f);
-            rigid.MovePosition(transform.position + direction * speed * Time.deltaTime);
-
-            // 내가 나아갈 방향과 바라볼 방향은 동일하기 때문이다.
-            // 방향 벡터 -> 회전 값.
+        // 키 입력이 생기면 해당 방향으로 바라본다.
+        if(direction != Vector3.zero)
             lookAt = Quaternion.LookRotation(direction);
-        }
+
+        Vector3 movement = direction * moveSpeed * (isRun ? 1.5f : 1.0f);       // 이동량.
+        movement.y = rigid.velocity.y;                                          // 수직 속도량.
+
+        rigid.velocity = movement;                                              // 속도 대입.
     }
     void Jump()
     {
@@ -125,8 +136,12 @@ public class PlayerMovement : MonoBehaviour
         body.rotation = Quaternion.Lerp(body.rotation, lookAt, rotateSpeed * Time.deltaTime);
     }
     
-
-    float rotateX; // x축 회전 값.
+    // 유저의 입력을 제한한다.
+    void SwitchControl(int value)
+    {
+        isLockControl = (value == 1);
+        Debug.Log($"Switch Control : {isLockControl}");
+    }
 
     void RotateCam()
     {
@@ -141,4 +156,10 @@ public class PlayerMovement : MonoBehaviour
         horizontalEye.Rotate(Vector3.up * x);
     }
 
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(base.transform.position, groundCheckRadius);
+    }
 }
