@@ -29,9 +29,21 @@ public class PlayerMovement : MonoBehaviour
     Rigidbody rigid;
     Quaternion lookAt;                      // 바라볼 방향.    
 
+    
     float rotateX;                          // x축 회전 값.
     bool isLockControl;                     // 키 입력 제한.
 
+    float prevVelocityY
+    {
+        get
+        {
+            return anim.GetFloat("prevVelocityY");
+        }
+        set
+        {
+            anim.SetFloat("prevVelocityY", value);
+        }
+    }
     bool isGrounded
     {
         get
@@ -75,6 +87,10 @@ public class PlayerMovement : MonoBehaviour
         rotateX = verticalEye.eulerAngles.x;        // 최초 x축 회전 값은 기본 값이다.
     }
 
+    private void FixedUpdate()
+    {
+        prevVelocityY = rigid.velocity.y;       // 이전 y축 속도.
+    }
     private void Update()
     {
         isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask);
