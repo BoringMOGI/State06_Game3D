@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour, IForce
 {
     [Header("Rotate")]
     [SerializeField] Transform horizontalEye;   // 수평 회전 시야.
@@ -31,7 +31,8 @@ public class PlayerMovement : MonoBehaviour
 
     
     float rotateX;                          // x축 회전 값.
-    bool isLockControl;                     // 키 입력 제한.
+    bool isLockControl;                     // 키 입력 제한. (true면 플레이어의 움직임을 제어할 수 없다.)
+    bool isLockVelocity;                    // 속도 제어 제한. (true면 직접 속도 값을 제어할 수 없다.)
 
     float prevVelocityY
     {
@@ -93,7 +94,7 @@ public class PlayerMovement : MonoBehaviour
     }
     private void Update()
     {
-        isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask);
+        isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask) && rigid.velocity.y <= 0.01f;
 
         RotateBody();
         RotateCam();
@@ -110,7 +111,9 @@ public class PlayerMovement : MonoBehaviour
             isMovement = false;
             isRun = false;
 
-            rigid.velocity = new Vector3(0f, rigid.velocity.y, 0f); // 캐릭터 정지.
+            // 캐릭터 정지.
+            if (!isLockVelocity)
+                rigid.velocity = new Vector3(0f, rigid.velocity.y, 0f); 
         }
 
         anim.SetFloat("velocityY", rigid.velocity.y);
@@ -134,7 +137,8 @@ public class PlayerMovement : MonoBehaviour
         Vector3 movement = direction * moveSpeed * (isRun ? 1.5f : 1.0f);       // 이동량.
         movement.y = rigid.velocity.y;                                          // 수직 속도량.
 
-        rigid.velocity = movement;                                              // 속도 대입.
+        if(!isLockVelocity)
+            rigid.velocity = movement;                                          // 속도 대입.
     }
     void Jump()
     {
@@ -156,9 +160,7 @@ public class PlayerMovement : MonoBehaviour
     void SwitchControl(int value)
     {
         isLockControl = (value == 1);
-        Debug.Log($"Switch Control : {isLockControl}");
     }
-
     void RotateCam()
     {
         float x = Input.GetAxis("Mouse X") * sencitivityX;     // 마우스의 x축 이동량.
@@ -172,6 +174,25 @@ public class PlayerMovement : MonoBehaviour
         horizontalEye.Rotate(Vector3.up * x);
     }
 
+
+    // 인터페이스 함수.
+    void IForce.OnContactForce(ForceData data)
+    {
+        StartCoroutine(Stun(data.stunTime));
+        Vector3 dir = data.direction;
+        rigid.AddForce(dir * data.force, ForceMode.Impulse);
+    }
+
+    IEnumerator Stun(float stunTime)
+    {
+        isLockControl = true;
+        isLockVelocity = true;
+
+        yield return new WaitForSeconds(stunTime);
+
+        isLockControl = false;
+        isLockVelocity = false;
+    }
 
     private void OnDrawGizmos()
     {
