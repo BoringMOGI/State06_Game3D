@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Stick.unity
+    guid: a316dc65f0becee4ebc1e4107fd3c05d
   m_configObjects: {}

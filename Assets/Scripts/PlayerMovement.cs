@@ -102,8 +102,8 @@ public class PlayerMovement : MonoBehaviour, IForce
         // 키 입력 제한이 걸리지 않앗을 경우.
         if (!isLockControl)
         {
-            Movement();
-            Jump();
+            // Movement();
+            // Jump();
         }
         else
         {
@@ -119,10 +119,13 @@ public class PlayerMovement : MonoBehaviour, IForce
         anim.SetFloat("velocityY", rigid.velocity.y);
     }
 
-    void Movement()
+    public void Movement(float x, float z)
     {
-        float x = Input.GetAxisRaw("Horizontal");           // 좌,우
-        float z = Input.GetAxisRaw("Vertical");             // 상,하
+        if (isLockControl)
+            return;
+
+        //float x = Input.GetAxisRaw("Horizontal");           // 좌,우
+        //float z = Input.GetAxisRaw("Vertical");             // 상,하
 
         // 입력 값에 따른 방향 벡터를 구한 뒤, Rigidbody의 MovePositoin을 이용한다.
         // 정면은 카메라의 로컬 좌표계 기준 정면이 되어야 한다.
@@ -140,10 +143,13 @@ public class PlayerMovement : MonoBehaviour, IForce
         if(!isLockVelocity)
             rigid.velocity = movement;                                          // 속도 대입.
     }
-    void Jump()
+    public void Jump()
     {
+        if (isLockControl)
+            return;
+
         // 점프 키를 누르고, 땅에 서 있는 경우.
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (isGrounded)
         {
             rigid.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
             anim.SetTrigger("onJump");
