@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// 캐릭터 컨트롤러 컴포넌트를 이용해 구현한 움직임.
+// Rigidbody를 사용하지 않았다.
+[RequireComponent(typeof(CharacterController))]
 public class Movement3D : MonoBehaviour
 {
     private const float GRAVITY = -9.81f;

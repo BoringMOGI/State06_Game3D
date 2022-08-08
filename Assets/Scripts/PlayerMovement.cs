@@ -23,28 +23,20 @@ public class PlayerMovement : MonoBehaviour, IForce
     [SerializeField] Transform body;        // 몸체 위치 정보.
     [SerializeField] Animator anim;         // 애니메이터.
     [SerializeField] float moveSpeed;       // 이동 속도.
+    [SerializeField] float runSpeed;        // 달리기 속도.
     [SerializeField] float rotateSpeed;     // 회전 속도.
 
-    new Transform transform;
-    Rigidbody rigid;
-    Quaternion lookAt;                      // 바라볼 방향.    
+    [Range(0.0f, 1.0f)]
+    [SerializeField] float runRatio;        // 달리기 비율 (조이스틱을 얼만큼 기울였을 때)
 
+    new Transform transform;                // 트랜스폼을 캐싱.
+    Rigidbody rigid;                        // 리지드 바디.
+    Quaternion lookAt;                      // 바라볼 방향.    
     
     float rotateX;                          // x축 회전 값.
     bool isLockControl;                     // 키 입력 제한. (true면 플레이어의 움직임을 제어할 수 없다.)
     bool isLockVelocity;                    // 속도 제어 제한. (true면 직접 속도 값을 제어할 수 없다.)
 
-    float prevVelocityY
-    {
-        get
-        {
-            return anim.GetFloat("prevVelocityY");
-        }
-        set
-        {
-            anim.SetFloat("prevVelocityY", value);
-        }
-    }
     bool isGrounded
     {
         get
@@ -55,7 +47,7 @@ public class PlayerMovement : MonoBehaviour, IForce
         {
             anim.SetBool("isGrounded", value);
         }
-    }
+    }                      // 땅 위에 서 있는가?
     bool isMovement
     {
         get
@@ -66,7 +58,7 @@ public class PlayerMovement : MonoBehaviour, IForce
         {
             anim.SetBool("isMovement", value);
         }
-    }
+    }                      // 움직이고 있는가?
     bool isRun
     {
         get
@@ -77,7 +69,7 @@ public class PlayerMovement : MonoBehaviour, IForce
         {
             anim.SetBool("isRun", value);
         }
-    }
+    }                           // 달리고 있는가?
 
     private void Start()
     {
@@ -88,16 +80,12 @@ public class PlayerMovement : MonoBehaviour, IForce
         rotateX = verticalEye.eulerAngles.x;        // 최초 x축 회전 값은 기본 값이다.
     }
 
-    private void FixedUpdate()
-    {
-        prevVelocityY = rigid.velocity.y;       // 이전 y축 속도.
-    }
     private void Update()
     {
         isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask) && rigid.velocity.y <= 0.01f;
 
         RotateBody();
-        RotateCam();
+        // RotateCam();
 
         // 키 입력 제한이 걸리지 않앗을 경우.
         if (!isLockControl)
@@ -119,25 +107,31 @@ public class PlayerMovement : MonoBehaviour, IForce
         anim.SetFloat("velocityY", rigid.velocity.y);
     }
 
+    // 플레이어 움직임 제어.
     public void Movement(float x, float z)
     {
         if (isLockControl)
             return;
 
-        //float x = Input.GetAxisRaw("Horizontal");           // 좌,우
-        //float z = Input.GetAxisRaw("Vertical");             // 상,하
-
         // 입력 값에 따른 방향 벡터를 구한 뒤, Rigidbody의 MovePositoin을 이용한다.
         // 정면은 카메라의 로컬 좌표계 기준 정면이 되어야 한다.
-        Vector3 direction = (horizontalEye.forward * z + horizontalEye.right * x).normalized;
-        isMovement = (direction != Vector3.zero);
-        isRun = Input.GetKey(KeyCode.LeftShift);
+        Vector3 direction = (horizontalEye.forward * z + horizontalEye.right * x);
+        Vector3 directionNor = direction.normalized;
+
+        // Mathf.abs : T
+        // = 특정 수의 절대 값을 리턴한다.
+        isRun = (Mathf.Abs(x) >= runRatio) || (Mathf.Abs(z) >= runRatio);
+        isMovement = (directionNor != Vector3.zero);
 
         // 키 입력이 생기면 해당 방향으로 바라본다.
-        if(direction != Vector3.zero)
-            lookAt = Quaternion.LookRotation(direction);
+        if (directionNor != Vector3.zero)
+        {
+            lookAt = Quaternion.LookRotation(directionNor);
+        }
 
-        Vector3 movement = direction * moveSpeed * (isRun ? 1.5f : 1.0f);       // 이동량.
+        // 이동량을 구할때 정규화되지 않은 벡터를 사용하기 때문에
+        // 정도에 따라서 다른 속도를 가진다.
+        Vector3 movement = direction * (isRun ? runSpeed : moveSpeed);          // 이동량.
         movement.y = rigid.velocity.y;                                          // 수직 속도량.
 
         if(!isLockVelocity)
@@ -155,17 +149,13 @@ public class PlayerMovement : MonoBehaviour, IForce
             anim.SetTrigger("onJump");
         }
     }
+
+    // 플레이어 회전 제어.
     void RotateBody()
     {
         // direction방향으로 향하는 회전 값.
         // 기준 오브젝트가 아니라 그 아래에 있는 몸체 오브젝트를 돌린다.
         body.rotation = Quaternion.Lerp(body.rotation, lookAt, rotateSpeed * Time.deltaTime);
-    }
-    
-    // 유저의 입력을 제한한다.
-    void SwitchControl(int value)
-    {
-        isLockControl = (value == 1);
     }
     void RotateCam()
     {
@@ -178,6 +168,12 @@ public class PlayerMovement : MonoBehaviour, IForce
 
         // y축을 기준으로 수평 회전 운동.
         horizontalEye.Rotate(Vector3.up * x);
+    }
+    
+    // 플레이어 움직임 제한.
+    void SwitchControl(int value)
+    {
+        isLockControl = (value == 1);
     }
 
 
