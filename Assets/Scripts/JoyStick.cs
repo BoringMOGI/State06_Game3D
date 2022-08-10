@@ -21,6 +21,7 @@ public class JoyStick : TouchState
     protected override void OnBeginTouch()
     {
        // 특정 값의 초기 값을 넣을 수도 있다.
+
     }
 
     // 지속 상태 : 터치 지속 중. 나의 터치 위치에 따라 stick을 움직인다.

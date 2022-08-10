@@ -4,16 +4,8 @@ using UnityEngine;
 
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour, IForce
+public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
 {
-    [Header("Rotate")]
-    [SerializeField] Transform horizontalEye;   // 수평 회전 시야.
-    [SerializeField] Transform verticalEye;     // 수직 회전 시야.
-    [SerializeField] float sencitivityX;        // x축 시야 민감도.
-    [SerializeField] float sencitivityY;        // y축 시야 민감도.
-    [SerializeField] float minRoateX;
-    [SerializeField] float maxRotateX;
-
     [Header("Jump")]
     [SerializeField] float jumpPower;
     [SerializeField] float groundCheckRadius;
@@ -21,6 +13,7 @@ public class PlayerMovement : MonoBehaviour, IForce
 
     [Header("Movemenet")]
     [SerializeField] Transform body;        // 몸체 위치 정보.
+    [SerializeField] Transform camPivot;    // 카메라 중심.
     [SerializeField] Animator anim;         // 애니메이터.
     [SerializeField] float moveSpeed;       // 이동 속도.
     [SerializeField] float runSpeed;        // 달리기 속도.
@@ -33,10 +26,7 @@ public class PlayerMovement : MonoBehaviour, IForce
     Rigidbody rigid;                        // 리지드 바디.
     Quaternion lookAt;                      // 바라볼 방향.    
     
-    float rotateX;                          // x축 회전 값.
     bool isLockControl;                     // 키 입력 제한. (true면 플레이어의 움직임을 제어할 수 없다.)
-    bool isLockVelocity;                    // 속도 제어 제한. (true면 직접 속도 값을 제어할 수 없다.)
-
     bool isGrounded
     {
         get
@@ -48,94 +38,75 @@ public class PlayerMovement : MonoBehaviour, IForce
             anim.SetBool("isGrounded", value);
         }
     }                      // 땅 위에 서 있는가?
-    bool isMovement
-    {
-        get
-        {
-            return anim.GetBool("isMovement");
-        }
-        set
-        {
-            anim.SetBool("isMovement", value);
-        }
-    }                      // 움직이고 있는가?
-    bool isRun
-    {
-        get
-        {
-            return anim.GetBool("isRun");
-        }
-        set
-        {
-            anim.SetBool("isRun", value);
-        }
-    }                           // 달리고 있는가?
 
     private void Start()
     {
         rigid = GetComponent<Rigidbody>();
         transform = base.transform;
-
         lookAt = transform.rotation;                // 바라볼 방향의 초기 값은 원래 방향이다.
-        rotateX = verticalEye.eulerAngles.x;        // 최초 x축 회전 값은 기본 값이다.
     }
 
     private void Update()
     {
-        isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask) && rigid.velocity.y <= 0.01f;
-
         RotateBody();
-        // RotateCam();
+        anim.SetFloat("velocityY", rigid.velocity.y);
 
-        // 키 입력 제한이 걸리지 않앗을 경우.
-        if (!isLockControl)
+        if (Input.GetKeyDown(KeyCode.Space))
+            Jump();
+    }
+
+    private void FixedUpdate()
+    {
+        // 지면 체크.
+        isGrounded = Physics.CheckSphere(transform.position, groundCheckRadius, groundMask);
+
+        // 내 속도는 입력 속도 + 지속 속도.
+        Vector3 velocity = inputForce + continuousForce;
+        if (velocity != Vector3.zero)
         {
-            // Movement();
-            // Jump();
+            velocity.y = rigid.velocity.y;
+            rigid.velocity = velocity;
+        }
+
+        // 지속 적인 힘은 지속적으로 감소한다.
+        continuousForce = Vector3.MoveTowards(continuousForce, Vector3.zero, Time.fixedDeltaTime * 3f);
+    }
+
+    Vector3 inputForce;         // 입력에 의한 힘.
+    Vector3 continuousForce;    // 어떠한 물체가 나에게 가한 지속적인 힘.
+
+    // 누군가가 나에게 주는 지속적인 힘이다.
+    public void Movement(float x, float z)
+    {
+        // 키 입력이 잠기면 입력 힘은 zero가 된다.
+        if (isLockControl)
+        {
+            inputForce = Vector3.zero;
+            anim.SetBool("isRun", false);
+            anim.SetBool("isMovement", false);
+            return;
         }
         else
         {
-            // 애니메이션 파라이터.
-            isMovement = false;
-            isRun = false;
-
-            // 캐릭터 정지.
-            if (!isLockVelocity)
-                rigid.velocity = new Vector3(0f, rigid.velocity.y, 0f); 
+            Vector2 input = new Vector2(x, z);  
+            anim.SetBool("isRun", input.magnitude >= 0.7f);     // 입력 값의 거리가 0.7이상일 경우는 달린다고 판단.
+            anim.SetBool("isMovement", input != Vector2.zero);  // 입력 값이 zero가 아닐 경우는 이동한다고 판단.
         }
 
-        anim.SetFloat("velocityY", rigid.velocity.y);
-    }
+        // 입력 값에 따른 방향 벡터를 구한다. 정면은 카메라의 로컬 좌표계 기준 정면이 되어야 한다.
+        // 축의 회전에 따라 정면 벡터에 y값이 들어있을 수 있기 때문에 제거한다.
+        Vector3 forward = camPivot.forward;
+        forward.y = 0f;
 
-    // 플레이어 움직임 제어.
-    public void Movement(float x, float z)
-    {
-        if (isLockControl)
-            return;
+        Vector3 direction = (forward * z + camPivot.right * x);
 
-        // 입력 값에 따른 방향 벡터를 구한 뒤, Rigidbody의 MovePositoin을 이용한다.
-        // 정면은 카메라의 로컬 좌표계 기준 정면이 되어야 한다.
-        Vector3 direction = (horizontalEye.forward * z + horizontalEye.right * x);
-        Vector3 directionNor = direction.normalized;
+        // 키 입력이 생기면 해당 방향으로 바라본다, 이동한다.
+        if (direction.normalized != Vector3.zero)
 
-        // Mathf.abs : T
-        // = 특정 수의 절대 값을 리턴한다.
-        isRun = (Mathf.Abs(x) >= runRatio) || (Mathf.Abs(z) >= runRatio);
-        isMovement = (directionNor != Vector3.zero);
-
-        // 키 입력이 생기면 해당 방향으로 바라본다.
-        if (directionNor != Vector3.zero)
-        {
-            lookAt = Quaternion.LookRotation(directionNor);
-        }
-
-        // 이동량을 구할때 정규화되지 않은 벡터를 사용하기 때문에
-        // 정도에 따라서 다른 속도를 가진다.
-        Vector3 movement = direction * (isRun ? runSpeed : moveSpeed);          // 이동량.
-        movement.y = rigid.velocity.y;                                          // 수직 속도량.
-
-        if(!isLockVelocity)
-            rigid.velocity = movement;                                          // 속도 대입.
+            lookAt = Quaternion.LookRotation(direction.normalized);
+        
+        // 입력에 따른 힘.
+        inputForce = direction * moveSpeed;
     }
     public void Jump()
     {
@@ -150,24 +121,41 @@ public class PlayerMovement : MonoBehaviour, IForce
         }
     }
 
+    bool isLockArea;
+    IEnumerator OnLockArea()
+    {
+        float beforeMoveSpeed = moveSpeed;
+        moveSpeed = 0;
+
+        while (isLockArea)
+            yield return null;
+
+        moveSpeed = beforeMoveSpeed;
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.tag.Equals("LockControlArea"))
+        {
+            isLockArea = true;
+            StartCoroutine(OnLockArea());
+        }
+    }
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.tag.Equals("LockControlArea"))
+        {
+            isLockArea = false;
+        }
+    }
+
+    #region private
+
     // 플레이어 회전 제어.
     void RotateBody()
     {
         // direction방향으로 향하는 회전 값.
         // 기준 오브젝트가 아니라 그 아래에 있는 몸체 오브젝트를 돌린다.
         body.rotation = Quaternion.Lerp(body.rotation, lookAt, rotateSpeed * Time.deltaTime);
-    }
-    void RotateCam()
-    {
-        float x = Input.GetAxis("Mouse X") * sencitivityX;     // 마우스의 x축 이동량.
-        float y = Input.GetAxis("Mouse Y") * sencitivityY;     // 마우스의 y축 이동량.
-
-        // x축을 기준으로 수직 회전 운동.
-        rotateX = Mathf.Clamp(rotateX - y, minRoateX, maxRotateX);      // 수직 회전량이 최소, 최대 범위가 되도록 조정.
-        verticalEye.localRotation = Quaternion.Euler(rotateX, 0, 0);
-
-        // y축을 기준으로 수평 회전 운동.
-        horizontalEye.Rotate(Vector3.up * x);
     }
     
     // 플레이어 움직임 제한.
@@ -176,24 +164,28 @@ public class PlayerMovement : MonoBehaviour, IForce
         isLockControl = (value == 1);
     }
 
+    #endregion
 
-    // 인터페이스 함수.
+    #region 인터페이스 함수.
+
     void IForce.OnContactForce(ForceData data)
     {
         StartCoroutine(Stun(data.stunTime));
         Vector3 dir = data.direction;
         rigid.AddForce(dir * data.force, ForceMode.Impulse);
     }
+    void IContinuousForce.AddContinuousForce(Vector3 direction, float power)
+    {
+        continuousForce = direction * power;
+    }
+
+    #endregion
 
     IEnumerator Stun(float stunTime)
     {
         isLockControl = true;
-        isLockVelocity = true;
-
         yield return new WaitForSeconds(stunTime);
-
         isLockControl = false;
-        isLockVelocity = false;
     }
 
     private void OnDrawGizmos()

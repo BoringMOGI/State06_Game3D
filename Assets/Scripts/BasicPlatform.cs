@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public interface IContinuousForce
+{
+    void AddContinuousForce(Vector3 direction, float power);
+}
+
 public class BasicPlatform : MonoBehaviour
 {
     // 움직이는 물체에 누군가 충돌하면 해당 물체를 나의 자식으로 만들어
