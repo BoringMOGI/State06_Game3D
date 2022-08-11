@@ -53,6 +53,9 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
 
         if (Input.GetKeyDown(KeyCode.Space))
             Jump();
+
+        if (Input.GetKeyDown(KeyCode.P))
+            UnityEngine.SceneManagement.SceneManager.LoadScene("SelectStage");
     }
 
     private void FixedUpdate()

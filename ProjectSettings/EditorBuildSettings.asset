@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Stick.unity
     guid: a316dc65f0becee4ebc1e4107fd3c05d
+  - enabled: 1
+    path: Assets/Scenes/SelectStage.unity
+    guid: 1a639649251a64a448568986af86b608
   m_configObjects: {}
