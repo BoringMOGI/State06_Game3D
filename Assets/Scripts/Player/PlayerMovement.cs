@@ -22,6 +22,12 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
     [Range(0.0f, 1.0f)]
     [SerializeField] float runRatio;        // 달리기 비율 (조이스틱을 얼만큼 기울였을 때)
 
+    [Header("Respawn")]
+    [SerializeField] Transform respawn;     // 리스폰 장소.
+    [SerializeField] float deadPosY;        // 플레이어가 죽는 특정 높이.
+    [SerializeField] float deadSpeed;       // 플레이어가 죽는 속도.
+    [SerializeField] float deadAirTime;     // 플레이어가 죽는 체공 시간.
+
     new Transform transform;                // 트랜스폼을 캐싱.
     Rigidbody rigid;                        // 리지드 바디.
     Quaternion lookAt;                      // 바라볼 방향.    
@@ -44,6 +50,9 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
         rigid = GetComponent<Rigidbody>();
         transform = base.transform;
         lookAt = transform.rotation;                // 바라볼 방향의 초기 값은 원래 방향이다.
+
+        StartCoroutine(CheckDead());
+        Respawn();
     }
 
     private void Update()
@@ -53,9 +62,6 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
 
         if (Input.GetKeyDown(KeyCode.Space))
             Jump();
-
-        if (Input.GetKeyDown(KeyCode.P))
-            UnityEngine.SceneManagement.SceneManager.LoadScene("SelectStage");
     }
 
     private void FixedUpdate()
@@ -77,6 +83,56 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
 
     Vector3 inputForce;         // 입력에 의한 힘.
     Vector3 continuousForce;    // 어떠한 물체가 나에게 가한 지속적인 힘.
+
+    public void Respawn()
+    {
+        // 리스폰 시 포지션 이동 + 현재 속도 초기화.
+        transform.position = respawn.position;
+        rigid.velocity = Vector3.zero;
+    }
+    public void SetRespawn(Transform newRespawn)
+    {
+        respawn = newRespawn;
+    }
+
+    IEnumerator CheckDead()
+    {
+        float airTime = 0.0f;
+
+        while(true)
+        {
+            if (!isGrounded)
+                airTime += Time.deltaTime;
+            else
+                airTime = 0f;
+
+            bool isDead = false;
+
+            if(!isDead && transform.position.y <= deadPosY)
+            {
+                isDead = true;
+                Debug.Log("플레이어의 y가 너무 낮습니다.");
+            }
+            else if(!isDead && rigid.velocity.magnitude >= deadSpeed)
+            {
+                isDead = true;
+                Debug.Log("플레이어의 속도가 너무 빠릅니다.");
+            }
+            else if(!isDead && airTime >= deadAirTime)
+            {
+                isDead = true;
+                Debug.Log("플레이어의 체공시간이 너무 깁니다.");
+            }
+
+            if(isDead)
+            {
+                airTime = 0.0f;
+                Respawn();
+            }
+
+            yield return null;
+        }
+    }
 
     // 누군가가 나에게 주는 지속적인 힘이다.
     public void Movement(float x, float z)
@@ -162,7 +218,12 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
     }
     
     // 플레이어 움직임 제한.
-    void SwitchControl(int value)
+    public void SwitchControl(bool isOn)
+    {
+        // 캐릭터의 움직임을 제어할 수 있는가?
+        isLockControl = !isOn;
+    }
+    private void SwitchControl(int value)
     {
         isLockControl = (value == 1);
     }
