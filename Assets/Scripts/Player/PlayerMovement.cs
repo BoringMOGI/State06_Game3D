@@ -180,6 +180,19 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
         }
     }
 
+    // 캐릭터를 표현한다.
+    public void OnSwitchModel(bool isOn)
+    {
+        body.gameObject.SetActive(isOn);
+    }
+    public void OnStopPlayer()
+    {
+        rigid.isKinematic = true;
+        anim.enabled = false;
+        isLockControl = true;
+    }
+
+
     bool isLockArea;
     IEnumerator OnLockArea()
     {
