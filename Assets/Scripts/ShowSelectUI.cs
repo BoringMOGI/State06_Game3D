@@ -19,6 +19,8 @@ public class ShowSelectUI : MonoBehaviour
         titleText.text = info.stageName;
         tipText.text = info.stageTip;
         stageImage.sprite = info.sprite;
+
+        StartCoroutine(Ready(info));
     }
 
     IEnumerator Ready(StageInfo.Stage info)

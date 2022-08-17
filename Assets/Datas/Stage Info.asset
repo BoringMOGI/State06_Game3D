@@ -13,24 +13,31 @@ MonoBehaviour:
   m_Name: Stage Info
   m_EditorClassIdentifier: 
   stageInfos:
-  - stageName: "\uC7A5\uC560\uBB3C \uD53C\uD558\uAE30"
+  - sceneName: Game
+    stageName: "\uC7A5\uC560\uBB3C \uD53C\uD558\uAE30"
     stageTip: "\uC5F4\uC2EC\uD788 \uC7A5\uC560\uBB3C\uC744 \uD53C\uD558\uC138\uC694"
     sprite: {fileID: 21300000, guid: 8883e216c72819f41a4fe62e0ff71d86, type: 3}
-  - stageName: "\uB124\uC628"
+  - sceneName: Game
+    stageName: "\uB124\uC628"
     stageTip: "\uB124\uC628 \uB9F5\uC774\uB2E4."
     sprite: {fileID: 21300000, guid: 5fae2feeedeb2784ab6af80a66e34aa8, type: 3}
-  - stageName: "\uC2DC\uC18C"
+  - sceneName: Game
+    stageName: "\uC2DC\uC18C"
     stageTip: "\uC2DC\uC18C \uB9F5\uC774\uB2E4."
     sprite: {fileID: 21300000, guid: b4975a92698d5d8428aee97c6226f603, type: 3}
-  - stageName: "\uBE59\uAE00\uBE59\uAE00"
+  - sceneName: Game
+    stageName: "\uBE59\uAE00\uBE59\uAE00"
     stageTip: "\uB3C4\uB294 \uB9F5\uC774\uB2E4."
     sprite: {fileID: 21300000, guid: 04a6cea0edbb28b429df8be5dd5d9b9a, type: 3}
-  - stageName: "\uBB38 \uCC0D\uAE30"
+  - sceneName: Game
+    stageName: "\uBB38 \uCC0D\uAE30"
     stageTip: "\uBB38\uC744 \uCC0D\uB294 \uB9F5\uC774\uB2E4."
     sprite: {fileID: 21300000, guid: 850d6aaee825f6a4cbc02f95033b437a, type: 3}
-  - stageName: "\uACE0\uBB34"
+  - sceneName: Game
+    stageName: "\uACE0\uBB34"
     stageTip: "\uACE0\uBB34\uB85C \uC774\uB8E8\uC5B4\uC9C4 \uB9F5\uC774\uB2E4."
     sprite: {fileID: 21300000, guid: fee1f4ab71d88c04fa1528930551b8d3, type: 3}
-  - stageName: "\uC911\uC138 \uC7A5\uC560\uBB3C"
+  - sceneName: Game
+    stageName: "\uC911\uC138 \uC7A5\uC560\uBB3C"
     stageTip: "\uC911\uC138 \uC7A5\uC560\uBB3C \uD53C\uD558\uAE30."
     sprite: {fileID: 21300000, guid: 20aa6201e1fb2ef43ac65919c75efffc, type: 3}
