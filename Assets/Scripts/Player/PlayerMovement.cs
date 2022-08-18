@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
+public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce, IMemory
 {
     [Header("Jump")]
     [SerializeField] float jumpPower;
@@ -269,5 +269,23 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce
     {
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(base.transform.position, groundCheckRadius);
+    }
+
+    public int GetID()
+    {
+        int id = GetInstanceID();
+        Debug.Log($"{gameObject.name}의 아이디 추출 : " + id);
+        return id;
+    }
+
+    public string GetMemoryJson()
+    {
+        return JsonUtility.ToJson(this, true);
+    }
+
+    public void ModifyMemory(string json)
+    {
+        JsonUtility.FromJsonOverwrite(json, this);
+        Debug.Log("플레이어 데이터 중간 로드");
     }
 }
