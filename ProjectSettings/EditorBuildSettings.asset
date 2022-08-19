@@ -20,4 +20,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Result.unity
     guid: dec2688977a2b56498c7ed26f735f376
+  - enabled: 1
+    path: Assets/Scenes/Overload.unity
+    guid: c17cce805cbc38241a5bcabaf6c335ad
+  - enabled: 1
+    path: Assets/Scenes/Load.unity
+    guid: 84679e7b414b76e4084669b2237a914c
   m_configObjects: {}

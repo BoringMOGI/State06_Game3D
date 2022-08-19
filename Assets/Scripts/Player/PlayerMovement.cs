@@ -6,6 +6,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce, IMemory
 {
+    [SerializeField] GameData gameData;
+
     [Header("Jump")]
     [SerializeField] float jumpPower;
     [SerializeField] float groundCheckRadius;
@@ -89,6 +91,9 @@ public class PlayerMovement : MonoBehaviour, IForce, IContinuousForce, IMemory
         // 리스폰 시 포지션 이동 + 현재 속도 초기화.
         transform.position = respawn.position;
         rigid.velocity = Vector3.zero;
+
+        gameData.deadCount += 1;
+        Debug.Log("플레이어가 죽었다. 부활(respawn)");
     }
     public void SetRespawn(Transform newRespawn)
     {

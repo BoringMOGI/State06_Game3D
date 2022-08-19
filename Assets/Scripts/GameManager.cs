@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] Countdown countdown;           // 카운트 다운 관리 클래스.
     [SerializeField] int countTime;                 // 게임 시작 전 카운트 다운.
     [SerializeField] float limitGameTime;           // 제한시간.
+    [SerializeField] GameData gameData;             // 게임 데이터.
 
     Coroutine limitTimeCoroutine;
 
@@ -21,6 +22,12 @@ public class GameManager : MonoBehaviour
 
     private void StartGame()
     {
+        // 게임 데이터 초기화.
+        gameData.limitTime = limitGameTime;
+        gameData.remainingTime = limitGameTime;
+        gameData.deadCount = 0;
+
+        // 게임 시작 연출.
         countdown.OnShowString("GO!");                      // Go라는 문자 출력.
         player.SwitchControl(true);                         // 플레이어의 제어 동작.
         limitTimeCoroutine = StartCoroutine(LimitTime());   // 제한시간 타이머 동작.
@@ -35,12 +42,22 @@ public class GameManager : MonoBehaviour
         player.OnStopPlayer();
 
         Debug.Log("게임 클리어");
+        StartCoroutine(ShowResult());
     }
     private void TimeOut()
     {
+        countdown.OnShowString("TIME OUT");          // 메시지 출력.
         player.OnStopPlayer();
+
+        Debug.Log("시간 초과!!");
+        StartCoroutine(ShowResult());
     }
 
+    IEnumerator ShowResult()
+    {  
+        yield return new WaitForSeconds(2f);
+        SceneMover.Instance.LoadSceneForce("Result");
+    }
     IEnumerator CountDown()
     {
         player.SwitchControl(false);
@@ -60,10 +77,14 @@ public class GameManager : MonoBehaviour
         while(true)
         {
             remaining -= Time.deltaTime;                // 매 프레임 프레임 간격(deltaTime)만큼 빼기.
+            gameData.remainingTime = remaining;
+
             limitTimeUI.UpdateLimitTime(remaining);     // 뺀 값을 UI에 전달.
             if (remaining <= 0.0f)                      // 남은 시간이 없다면.
             {
                 remaining = 0.0f;                       // 오차 없이 0으로 대입.
+                gameData.remainingTime = remaining;
+
                 limitTimeUI.UpdateLimitTime(0f);        // UI전달.
                 break;                                  // 카운팅 종료.
             }

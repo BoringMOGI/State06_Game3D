@@ -11,7 +11,9 @@ public class ResultManager : MonoBehaviour
     [SerializeField] Text deadCountText;        // 죽은 횟수 텍스트.
     [SerializeField] Text remainingText;        // 남은 시간 텍스트.
     [SerializeField] Text resultText;           // 결과 텍스트.
-    [SerializeField] Button confirmButton;      // 확인 버튼.
+
+    [SerializeField] Button goNextButton;       // 클리어) 다음 씬으로 로드.
+    [SerializeField] Button goMainButton;       // 실패) 메인 씬으로 로드.
 
     bool isClear;
 
@@ -20,7 +22,10 @@ public class ResultManager : MonoBehaviour
         deadCountText.text = string.Empty;
         remainingText.text = string.Empty;
         resultText.text = string.Empty;
-        confirmButton.gameObject.SetActive(false);
+
+        goNextButton.gameObject.SetActive(false);
+        goMainButton.gameObject.SetActive(false);
+
         resultText.gameObject.SetActive(false);
 
         StartCoroutine(Reward());
@@ -51,7 +56,11 @@ public class ResultManager : MonoBehaviour
         
 
         yield return new WaitForSeconds(0.8f);
-        confirmButton.gameObject.SetActive(true);           // 확인 버튼 활성화.
+
+        if(isClear)
+            goNextButton.gameObject.SetActive(true);           // 확인 버튼 활성화.
+        else
+            goMainButton.gameObject.SetActive(true);
     }
 
     IEnumerator DeadCountAnim()

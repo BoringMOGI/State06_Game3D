@@ -26,6 +26,6 @@ public class ShowSelectUI : MonoBehaviour
     IEnumerator Ready(StageInfo.Stage info)
     {
         yield return new WaitForSeconds(showTime);
-        SceneManager.LoadScene(info.sceneName);
+        SceneMover.Instance.LoadScene(info.sceneName);
     }
 }
